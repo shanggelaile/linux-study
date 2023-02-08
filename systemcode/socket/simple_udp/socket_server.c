@@ -20,7 +20,7 @@
 
 #define SERVER_PORT     8888    //端口号不能发生冲突,不常用的端口号通常大于5000
 
-int main(void)
+int main(int argc, char* argv[])
 {
     struct sockaddr_in server_addr = {0};
     struct sockaddr_in client_addr = {0};
@@ -31,12 +31,13 @@ int main(void)
     int ret;
 
     /* 打开套接字，得到套接字描述符 */
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (0 > sockfd) {
         perror("socket error");
         exit(EXIT_FAILURE);
     }
-
+	
+	memset(&server_addr, 0, sizeof(server_addr));
     /* 将套接字与指定端口号进行绑定 */
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -49,27 +50,6 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    /* 使服务器进入监听状态 */
-    ret = listen(sockfd, 50);
-    if (0 > ret) {
-        perror("listen error");
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-
-    /* 阻塞等待客户端连接 */
-    connfd = accept(sockfd, (struct sockaddr *)&client_addr, &addrlen);
-    if (0 > connfd) {
-        perror("accept error");
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-
-    printf("有客户端接入...\n");
-    inet_ntop(AF_INET, &client_addr.sin_addr.s_addr, ip_str, sizeof(ip_str));
-    printf("客户端主机的IP地址: %s\n", ip_str);
-    printf("客户端进程的端口号: %d\n", client_addr.sin_port);
-
     /* 接收客户端发送过来的数据 */
     for ( ; ; ) {
 
@@ -77,7 +57,8 @@ int main(void)
         memset(recvbuf, 0x0, sizeof(recvbuf));
 
         // 读数据
-        ret = recv(connfd, recvbuf, sizeof(recvbuf), 0);
+        ret = recvfrom(sockfd, recvbuf, sizeof(recvbuf), 0, 
+						(struct sockaddr*)&client_addr, &addrlen);
         if(0 >= ret) {
             perror("recv error");
             close(connfd);

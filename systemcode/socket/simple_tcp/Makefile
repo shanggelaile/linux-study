@@ -1,3 +1,10 @@
+FILE ?= client
+ifeq ($(FILE),client)
+	obj-m := socket_client.o
+else
+	obj-m := socket_server.o
+endif
+
 ifeq ($(KERNELRELEASE),)
 	KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 	PWD := $(shell pwd)

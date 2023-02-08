@@ -19,17 +19,17 @@
 #include <netinet/in.h>
 
 #define SERVER_PORT		8888          	//服务器的端口号
-#define SERVER_IP   	"192.168.50.11"	//服务器的IP地址
+#define SERVER_IP   	"192.168.178.184"	//服务器的IP地址
 
-int main(void)
+int main(int argc, char* argv[])
 {
     struct sockaddr_in server_addr = {0};
     char buf[512];
     int sockfd;
     int ret;
-
+	
     /* 打开套接字，得到套接字描述符 */
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (0 > sockfd) {
         perror("socket error");
         exit(EXIT_FAILURE);
@@ -37,17 +37,10 @@ int main(void)
 
     /* 调用connect连接远端服务器 */
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(SERVER_PORT);  //端口号
-    inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);//IP地址
+    server_addr.sin_port = htons(atoi(argv[2]));  //端口号
+    inet_pton(AF_INET, argv[1], &server_addr.sin_addr);//IP地址
+	//server_addr.sin_addr.s_addr = inet_addr(argv[1]);
 
-    ret = connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
-    if (0 > ret) {
-        perror("connect error");
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-
-    printf("服务器连接成功...\n\n");
 
     /* 向服务器发送数据 */
     for ( ; ; ) {
@@ -59,7 +52,8 @@ int main(void)
         fgets(buf, sizeof(buf), stdin);
 
         // 将用户输入的数据发送给服务器
-        ret = send(sockfd, buf, strlen(buf), 0);
+        ret = sendto(sockfd, buf, strlen(buf), 0, 
+        				(struct sockaddr*)&server_addr, sizeof(server_addr));
         if(0 > ret){
             perror("send error");
             break;
