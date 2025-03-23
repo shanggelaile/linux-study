@@ -185,3 +185,27 @@ git config --global -l
 Gitee导入公钥
 用记事本打开刚刚生成的公钥：D:\Users\22030078.ssh\id_rsa.pub 。全选复制下来
 
+
+
+
+
+# KO文件编译
+
+makefile文件demo
+
+```makefile
+obj-m += helloworld.o
+KDIR:=/home/ubuntu/Luckfox/sdk-1015/luckfox-pico/sysdrv/source/kernel
+PWD?=$(shell pwd)
+MAKE := make
+ARCH := arm
+CROSS_COMPILE := /home/ubuntu/Luckfox/sdk-1015/luckfox-pico/tools/linux/toolchain/arm-rockchip830-linux-uclibcgnueabihf/bin/arm-rockchip830-linux-uclibcgnueabihf-
+KBUILD_OUTPUT := $(abspath $(dir $(lastword $(KDIR))))/objs_kernel
+all:
+        $(MAKE) O=$(KBUILD_OUTPUT) -C $(KDIR) M=$(PWD) modules \
+ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
+        echo $(PWD)
+clean:
+        rm -f *.ko *.o *.mod *.mod.o *.mod.c *.symvers *.order
+```
+
