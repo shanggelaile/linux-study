@@ -185,11 +185,13 @@ git config --global -l
 Gitee导入公钥
 用记事本打开刚刚生成的公钥：D:\Users\22030078.ssh\id_rsa.pub 。全选复制下来
 
-```
+```c
 git push origin main
 ```
 
-
+```
+git commit -m "xxxxxx"
+```
 
 
 
@@ -241,5 +243,40 @@ unzip test1.zip
 
 ```
 mount -t debugfs none /sys/kernel/debug
+```
+
+# C语言注意事项
+
+## C语言指针
+
+### 指针赋值
+
+#### NULL指针
+
+```
+#define NULL ((void *)0)
+```
+
+```
+int num;
+int *pi = &num;
+pi = 0; pi = NULL; //都是正确的
+pi = 100; //是错误的不被允许
+```
+
+### 二级数组指针
+
+```C
+char *name[] = {"123","1234","123456"};
+printf("%c\n",*(*(name+1)+2));
+printf("%c\n",name[1][2]);
+```
+
+### 打印
+
+一般%p表示指针，以16进制大写为主
+
+```
+printf("%p");
 ```
 
