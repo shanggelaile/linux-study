@@ -81,10 +81,10 @@ cd luckfox-pico
 
 ```shell
 #第一次运行docker环境
-sudo docker run -it --name luckfox --privileged -v /home/ubuntu/luckfox-pico:/home luckfoxtech/luckfox_pico:1.0 /bin/bash
+sudo docker run -it --name shangyaqi --privileged -v /home/shang/luckfox-git/luckfox-pico:/home luckfoxtech/luckfox_pico:1.0 /bin/bash
 
 #第二次运行docker环境
-sudo docker start -ai luckfox
+sudo docker start -ai shangyaqi
 
 #退出
 exit
@@ -185,6 +185,12 @@ git config --global -l
 Gitee导入公钥
 用记事本打开刚刚生成的公钥：D:\Users\22030078.ssh\id_rsa.pub 。全选复制下来
 
+```
+git push origin main
+```
+
+
+
 
 
 
@@ -207,5 +213,33 @@ ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE)
         echo $(PWD)
 clean:
         rm -f *.ko *.o *.mod *.mod.o *.mod.c *.symvers *.order
+```
+
+
+
+# Linux常用命令
+
+## 压缩与解压缩
+
+将test1压缩
+
+```
+tar -vcjf test1.tar.bz2 test1
+tar -vczf test1.tar.gz test1
+zip -rv test1.zip test1
+```
+
+解压缩
+
+```
+tar -vxjf test1.tar.bz2
+tar -vxzf test1.tar.gz
+unzip test1.zip
+```
+
+## 挂载debugfs
+
+```
+mount -t debugfs none /sys/kernel/debug
 ```
 
