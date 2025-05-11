@@ -160,7 +160,25 @@ docker top 1758                              #查看容器中运行的进程。
 
 - 注：通常你只需要提供容器的前几位字符作为容器的 ID，由于 Docker 容器的 ID 是唯一的。前几位字符通常足以唯一标识一个容器。使用命令时请替换自己的实际容器 ID。
 
-# GIT使用
+# 工具使用
+
+## vscode使用
+
+### markdown如何查看
+
+ctrl+shift+v可以预览
+
+### 初始化配置
+
+chinese语言设置，github theme颜色配置
+
+## Topyra
+
+### 设置大纲折叠
+
+文件-》偏好设置-》外观-》允许折叠大纲视图
+
+## GIT使用
 
 配置git全局账户和Email
 注意：Email和name设置成自己的，Email后面用得上
@@ -251,22 +269,46 @@ mount -t debugfs none /sys/kernel/debug
 
 ### 指针赋值
 
+```
+注意（char *）pi是指针，*pi是变量
+```
+
 #### NULL指针
 
 ```
 #define NULL ((void *)0)
 ```
 
-```
+```c
 int num;
 int *pi = &num;
 pi = 0; pi = NULL; //都是正确的
-pi = 100; //是错误的不被允许
 ```
 
 #### void指针
 
+void指针与char指针具有相同的形式和内存对齐格式
 
+### 指针加减法
+
+```c
+char c;
+char *pc = &c;
+pc++;
+```
+
+#### *pc++代表
+
+```c
+*(pc);
+pc = pc + 1;
+```
+
+
+
+### 指针预定义类型
+
+size_t表示c语言中任何对象能达到的最大长度
 
 ### 二级数组指针
 
@@ -278,9 +320,18 @@ printf("%c\n",name[1][2]);
 
 ### 打印
 
-一般%p表示指针，以16进制大写为主
+%p：表示指针，以16进制大写为主
 
-```
+%zu%lu%u：表示无符号型整数
+
+```c
 printf("%p");
+```
+
+## C语言常用处理函数
+
+```c
+(int)round(0.55);//四舍五入
+int rounded = (int)(num + 0.5); // 适用于正数
 ```
 
