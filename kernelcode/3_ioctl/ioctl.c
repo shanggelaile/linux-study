@@ -82,7 +82,7 @@ static DEFINE_SPINLOCK(mfp_lock);	  	/* define a    spinlock */
  */
 void my_work_handle(struct work_struct *work)
 {
-	struct charbase_dev *my_char = container_of(work, struct charbase_dev, mywork_struct);
+	struct  charbase_dev *my_char = container_of(work, struct charbase_dev, mywork_struct);
 	printk(KERN_ALERT "%s called (%d).\n", __FUNCTION__, my_char->mydata);
 }
 
