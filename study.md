@@ -297,11 +297,21 @@ char *pc = &c;
 pc++;
 ```
 
-#### *pc++代表
+#### *pc++和++pc区别
 
 ```c
-*(pc);
-pc = pc + 1;
+*pc++
+*(pc); pc = pc + 1;
+*++pc
+pc++；*pc
+```
+
+### 字符串处理
+
+```c
+int main(int argc, char **argv)
+int main(int argc, char *argv[])
+//这两个是等价的
 ```
 
 
