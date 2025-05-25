@@ -33,6 +33,7 @@
 *.lzo
 *.patch
 *.gcno
+*.exe
 modules.builtin
 Module.symvers
 *.dwo
