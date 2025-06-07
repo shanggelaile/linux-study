@@ -21,6 +21,13 @@ typedef struct _node {
 } Node;
 
 /**
+ * 链表节点结构体
+ */
+typedef struct _node2 {
+    void *data;
+    struct _node2 *next;
+} Node2;
+/**
  * 创建新节点
  */
 Node *create_node(int data) {
