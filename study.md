@@ -493,3 +493,35 @@ d = 4;    // 写操作4
 
 若无 `wmb()`，处理器可能将写操作重排序为：`a=1 → c=3 → d=4 → b=2`。
 `wmb()` 强制要求：**`a=1` 和 `b=2` 必须在 `c=3` 和 `d=4` 之前完成**。
+
+## 数据结构
+
+### 链表学习
+
+Linux 内核使用了一种 **双向循环链表** 作为基础的[数据结构](https://so.csdn.net/so/search?q=数据结构&spm=1001.2101.3001.7020)，主要用于管理各种内核对象，如进程、任务、设备等。它的实现位于 `include/linux/list.h` 头文件中。
+
+## 同步管理
+
+### 原子操作
+
+由于锁的开销较大，单变量就使用原子操作
+
+```
+
+```
+
+
+
+### 互斥锁
+
+互斥锁可以使用可能阻塞的函数，如link = kzalloc(sizeof(*link), GFP_KERNEL);
+
+```c
+#include <linux/mutex.h>
+static DEFINE_MUTEX(fwnode_link_lock);
+mutex_lock(&fwnode_link_lock);
+mutex_unlock(&fwnode_link_lock);
+```
+
+### 自旋锁
+
