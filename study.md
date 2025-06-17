@@ -502,15 +502,27 @@ Linux 内核使用了一种 **双向循环链表** 作为基础的[数据结构]
 
 ## 同步管理
 
+| 同步机制 | 适用场景                       | 特点                             |
+| -------- | ------------------------------ | -------------------------------- |
+| 自旋锁   | 短临界区，不可睡眠上下文       | 忙等待，不引起调度               |
+| 互斥量   | 长临界区，可睡眠               | 会引起进程调度，不能在中断中使用 |
+| 读写锁   | 读多写少场景                   | 允许多个读者，互斥写者           |
+| 顺序锁   | 读多写少且读者不需要绝对一致性 | 写优先，读不阻塞写               |
+
 ### 原子操作
 
-由于锁的开销较大，单变量就使用原子操作
+由于锁的开销较大，单变量就使用原子操作，用的少先不用记录
 
+### 内存屏障
+
+在smp场景中，可能会引起读写顺序不一致问题，需要使用内存屏障来保障读写顺序
+
+```c
+mb();//读写都可以
+rmb();//保护读
+wmb();//保护写
+smp_mb();smp_rmb();smp_wmb();
 ```
-
-```
-
-
 
 ### 互斥锁
 
@@ -519,9 +531,145 @@ Linux 内核使用了一种 **双向循环链表** 作为基础的[数据结构]
 ```c
 #include <linux/mutex.h>
 static DEFINE_MUTEX(fwnode_link_lock);
+//或者mutex_init(&fwnode_link_lock);
 mutex_lock(&fwnode_link_lock);
 mutex_unlock(&fwnode_link_lock);
 ```
 
 ### 自旋锁
 
+必须时间短，不能休眠与等待，不能使用malloc等引起睡眠的操作，多用于在链表操作上
+
+```c
+// 基本自旋锁定义
+spinlock_t lock;
+ 
+// 初始化方式
+spin_lock_init(&lock);  // 动态初始化
+DEFINE_SPINLOCK(lock);  // 静态初始化
+ 
+// 常用操作函数
+spin_lock(&lock);       // 获取锁
+spin_unlock(&lock);     // 释放锁
+ 
+// 中断安全版本
+spin_lock_irqsave(&lock, flags);    // 保存中断状态并禁用中断
+spin_unlock_irqrestore(&lock, flags); // 恢复中断状态
+ 
+// 其他变体
+spin_lock_irq(&lock);   // 禁用本地中断并获取锁
+spin_unlock_irq(&lock); // 释放锁并启用本地中断
+```
+
+## 调试技术
+
+最近在验证芯片功能的过程中发现了一个好用的内核调试接口，print_hex_dump，除了直接打印16进制和ascii外，还支持动态调试打印，uboot和内核中都有该函数的实现。
+
+1.函数功能与用途
+print_hex_dump是 Linux 内核中的一个函数，用于以十六进制和 ASCII 码格式打印内存数据块。它提供了一种方便的方式来查看和调试内核中的二进制数据。下面是函数原型：
+
+void print_hex_dump(const char *level, const char *prefix_str, int prefix_type,
+		    int rowsize, int groupsize,
+		    const void *buf, size_t len, bool ascii)
+{
+	const u8 *ptr = buf;
+	int i, linelen, remaining = len;
+	unsigned char linebuf[32 * 3 + 2 + 32 + 1];
+
+	if (rowsize != 16 && rowsize != 32)
+		rowsize = 16;
+	 
+	for (i = 0; i < len; i += rowsize) {
+		linelen = min(remaining, rowsize);
+		remaining -= rowsize;
+	 
+		hex_dump_to_buffer(ptr + i, linelen, rowsize, groupsize,
+				   linebuf, sizeof(linebuf), ascii);
+	 
+		switch (prefix_type) {
+		case DUMP_PREFIX_ADDRESS:
+			printk("%s%s%p: %s\n",
+			       level, prefix_str, ptr + i, linebuf);
+			break;
+		case DUMP_PREFIX_OFFSET:
+			printk("%s%s%.8x: %s\n", level, prefix_str, i, linebuf);
+			break;
+		default:
+			printk("%s%s%s\n", level, prefix_str, linebuf);
+			break;
+		}
+	}
+}
+AI写代码
+
+参数解释：
+
+@level: 内核log级别 (e.g. KERN_DEBUG)
+
+@prefix_str: 打印的前缀字符串
+
+@prefix_type: 地址的输出格式是按照偏移、绝对地址或者不输出地址 (%DUMP_PREFIX_OFFSET, %DUMP_PREFIX_ADDRESS, %DUMP_PREFIX_NONE)
+
+@rowsize: 每行印输出字节数; must be 16 or 32
+
+@groupsize: 每次打印多少字节 (1, 2, 4, 8; default = 1)
+
+@buf: 打印的数据地址
+
+@len: 要打印数据长度
+
+@ascii: 是否输出ascii码
+
+2. 示例
+在调试内核模块间传递的数据时，通过打印数据的十六进制和 ASCII 码表示，能够更直观地分析数据内容和格式是否符合预期。
+
+一次打印1字节，共打印32字节：
+
+print_hex_dump(KERN_DEBUG, "show: ", DUMP_PREFIX_ADDRESS, 16, 1,bar_addr, 32, true);
+
+ 输出打印现象：
+
+
+
+一次打印2字节，共打印64字节：
+
+print_hex_dump(KERN_DEBUG, "show: ", DUMP_PREFIX_ADDRESS, 16, 2,bar_addr, 64, true);
+
+ 
+
+3.动态调试
+除此之外print_hex_dump_debug还支持动态调试，在这之前我们先了解下什么是动态调试。
+
+这功能牛逼极了，我们不再需要为了添加了调试代码，而重新编译安装内核/驱动。你可以指定 CONDIF_DYNAMIC_DEBUG 选项打开动态调试功能，然后通过 /sys/kernel/debug/dynamic_debug/control 接口指定要打印哪些调试日志。
+
+1. mkdir /mnt/dbg
+
+2. mount -t debugfs none /mnt/dbg 默认挂载在/sys/kernel/debug/下
+
+3.控制某个文件所有输出dev_dbg()、print_hex_dump_debug等
+
+echo -n "file xxx.c +p" > /mnt/dbg/dynamic_debug/control
+
+4.控制某个函数所有dev_dbg()，print_hex_dump_debug等
+
+echo -n "func xxx +p" > /mnt/dbg/dynamic_debug/control
+
+运行程序，使用dmesg则可以看到相应dev_dbg()的输出信息。
+
+5.当调试结束，不再想输出dev_dbg()信息了，使用下面命令关闭即可
+
+echo -n "file xxx.c -p" > /mnt/dbg/dynamic_debug/control
+
+echo -n "func xxx -p" > /mnt/dbg/dynamic_debug/control
+
+————————————————
+
+![img](https://i-blog.csdnimg.cn/direct/ac1014e056b24969958199d2821b7f89.png)
+
+
+
+![img](https://i-blog.csdnimg.cn/direct/9af07353ff7c48bc9ea141e0e6a88a11.png)
+
+                            本文为博主原创文章，未经博主允许不得转载。
+
+原文链接：https://blog.csdn.net/muaxi8/article/details/143186067
